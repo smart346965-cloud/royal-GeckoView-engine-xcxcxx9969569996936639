@@ -12,15 +12,16 @@ import androidx.annotation.NonNull;
 
 import org.mozilla.geckoview.GeckoRuntime;
 import org.mozilla.geckoview.GeckoSession;
+import org.mozilla.geckoview.GeckoSessionSettings;
 import org.mozilla.geckoview.GeckoView;
 
 /**
- * =========================================================
- * 👑 ROYAL WEBVIEW HOST (The Immortal Gecko Engine Core V4)
- * =========================================================
- * Architecture: Thread-Safe Singleton, Low-Level Gecko Pre-Warmed,
- * Memory-Leak Proof (Soft Restart), Crash Resilient.
- */
+=========================================================
+👑 ROYAL WEBVIEW HOST (The Immortal Gecko Engine Core V4)
+=========================================================
+Architecture: Thread-Safe Singleton, Low-Level Gecko Pre-Warmed,
+Memory-Leak Proof (Soft Restart), Crash Resilient.
+*/
 public final class RoyalWebViewHost {
 
     private static final String TAG = "RoyalGeckoHost";
@@ -50,8 +51,8 @@ public final class RoyalWebViewHost {
     private RoyalWebViewHost() {}
 
     /**
-     * 🚀 CREATE: تهيئة محرك GeckoRuntime وجلسة العمل وتسخينهما بالكامل في الخلفية (Thread-Safe)
-     */
+    🚀 CREATE: تهيئة محرك GeckoRuntime وجلسة العمل وتسخينهما بالكامل في الخلفية (Thread-Safe)
+    */
     public static synchronized void create(@NonNull Context applicationContext) {
         // 🛡️ فرض التنفيذ على الـ UI Thread لمنع انهيار محرك الرندرة الرسومي
         if (Looper.myLooper() != Looper.getMainLooper()) {
@@ -72,30 +73,30 @@ public final class RoyalWebViewHost {
                 geckoRuntimeInstance = GeckoRuntime.create(applicationContext.getApplicationContext());
             }
 
-            // 2️⃣ تهيئة الجلسة المستقلة (GeckoSession) وإعدادها لاستقبال الرندرة
-            geckoSessionInstance = new GeckoSession();
+            // 2️⃣ تهيئة الجلسة المستقلة (GeckoSession) وإعدادها لاستقبال الرندرة  
+            geckoSessionInstance = new GeckoSession();  
             
-            // ضبط خيارات الجلسة بشكل متقدم
-            GeckoSession.Settings settings = geckoSessionInstance.getSettings();
-            settings.setUseTrackingProtection(true); // حماية مدمجة ضد أدوات التتبع لتسريع التصفح
-            settings.setAllowJavascript(true);       // تفعيل الجافا سكريبت بالكامل
-            settings.setAutomaticFullscreenMode(true);
-
-            // 3️⃣ ربط الجلسة بالمحرك الأساسي
-            geckoSessionInstance.open(geckoRuntimeInstance);
-
-            // 4️⃣ بناء حاوية العرض الرسومية (GeckoView)
-            geckoViewInstance = new GeckoView(applicationContext.getApplicationContext());
-            geckoViewInstance.setSession(geckoSessionInstance);
-
-            // 🛡️ تفعيل الـ Hardware Acceleration على مستوى النظام للمحرك الجديد
-            geckoViewInstance.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-
-            // 🌉 تجهيز وحقن الجسر الملكي المطور لـ GeckoView
-            geckoBridgeInstance = new RoyalJsBridge(geckoSessionInstance);
-            geckoBridgeInstance.install(); // تثبيت الجسر لتأمين التواصل الفوري مع الويب
-
-            isInitialized = true;
+            // ضبط خيارات الجلسة بشكل متقدم  
+            GeckoSessionSettings settings = geckoSessionInstance.getSettings();  
+            settings.setUseTrackingProtection(true); // حماية مدمجة ضد أدوات التتبع لتسريع التصفح  
+            settings.setAllowJavascript(true);       // تفعيل الجافا سكريبت بالكامل  
+            settings.setAutomaticFullscreenMode(true);  
+            
+            // 3️⃣ ربط الجلسة بالمحرك الأساسي  
+            geckoSessionInstance.open(geckoRuntimeInstance);  
+            
+            // 4️⃣ بناء حاوية العرض الرسومية (GeckoView)  
+            geckoViewInstance = new GeckoView(applicationContext.getApplicationContext());  
+            geckoViewInstance.setSession(geckoSessionInstance);  
+            
+            // 🛡️ تفعيل الـ Hardware Acceleration على مستوى النظام للمحرك الجديد  
+            geckoViewInstance.setLayerType(View.LAYER_TYPE_HARDWARE, null);  
+            
+            // 🌉 تجهيز وحقن الجسر الملكي المطور لـ GeckoView  
+            geckoBridgeInstance = new RoyalJsBridge(geckoSessionInstance);  
+            geckoBridgeInstance.install(); // تثبيت الجسر لتأمين التواصل الفوري مع الويب  
+            
+            isInitialized = true;  
             Log.i(TAG, "✅ Immortal GeckoView Host Created & V8 pre-warm sequence initiated.");
         } catch (Exception e) {
             Log.e(TAG, "❌ FATAL: Failed to initialize GeckoView Engine.", e);
@@ -103,8 +104,8 @@ public final class RoyalWebViewHost {
     }
 
     /**
-     * 🔗 ATTACH: ربط واجهة العرض (GeckoView) بالـ Activity النشطة حالياً بالتطبيق
-     */
+    🔗 ATTACH: ربط واجهة العرض (GeckoView) بالـ Activity النشطة حالياً بالتطبيق
+    */
     public static synchronized GeckoView attach(@NonNull Activity activity) {
         // 🛡️ فحص حماية الرام وإعادة التشغيل الصامت عند اللزوم
         checkSoftRestart(activity.getApplicationContext());
@@ -120,7 +121,7 @@ public final class RoyalWebViewHost {
 
         // تنشيط الجلسة فوراً
         if (geckoSessionInstance != null) {
-            geckoSessionInstance.resume();
+            geckoSessionInstance.setActive(true);
         }
 
         attachCount++;
@@ -128,8 +129,8 @@ public final class RoyalWebViewHost {
     }
 
     /**
-     * 🧲 DETACH: فصل حاوية العرض وإدخال المحرك في وضع السبات الذكي للحفاظ على البطارية والذاكرة
-     */
+    🧲 DETACH: فصل حاوية العرض وإدخال المحرك في وضع السبات الذكي للحفاظ على البطارية والذاكرة
+    */
     public static synchronized void detach() {
         if (geckoViewInstance == null) return;
 
@@ -138,29 +139,29 @@ public final class RoyalWebViewHost {
         safeRemoveFromParent();
 
         if (geckoSessionInstance != null) {
-            geckoSessionInstance.pause(); // إيقاف الرسوميات الثقيلة مؤقتاً في الخلفية
+            geckoSessionInstance.setActive(false); // إيقاف الرسوميات الثقيلة مؤقتاً في الخلفية
         }
 
         detachCount++;
     }
 
     /**
-     * 💣 DESTROY: تدمير المحرك والتحرير الكامل والجراحي لموارد النظام
-     */
+    💣 DESTROY: تدمير المحرك والتحرير الكامل والجراحي لموارد النظام
+    */
     public static synchronized void destroy() {
         if (geckoViewInstance != null) {
             Log.w(TAG, "💣 Destroying Royal Gecko Host.");
             safeRemoveFromParent();
 
-            try {
-                if (geckoSessionInstance != null) {
-                    geckoSessionInstance.stop();
-                    geckoSessionInstance.close();
-                }
-            } catch (Exception ignored) {}
-
-            geckoViewInstance = null;
-            geckoSessionInstance = null;
+            try {  
+                if (geckoSessionInstance != null) {  
+                    geckoSessionInstance.stop();  
+                    geckoSessionInstance.close();  
+                }  
+            } catch (Exception ignored) {}  
+            
+            geckoViewInstance = null;  
+            geckoSessionInstance = null;  
             isInitialized = false;
         }
     }
@@ -180,8 +181,8 @@ public final class RoyalWebViewHost {
     // ==========================================
 
     /**
-     * 🔄 Soft Restart System (إعادة تصفير الذاكرة الدورية)
-     */
+    🔄 Soft Restart System (إعادة تصفير الذاكرة الدورية)
+    */
     public static synchronized void checkSoftRestart(Context context) {
         long now = System.currentTimeMillis();
         if (now - lastRestartTime > MAX_UPTIME) {
@@ -217,4 +218,4 @@ public final class RoyalWebViewHost {
     public static RoyalJsBridge getBridge() {
         return geckoBridgeInstance;
     }
-    }
+}
