@@ -1,9 +1,9 @@
 name: Royal Cloud Factory 👑
 
 on:
-  workflow_dispatch: # 👑 لتفعيل زر البناء اليدوي (Run workflow) داخل جيت هاب
+  workflow_dispatch: 
   repository_dispatch:
-    types: [build_app] # 🚀 يظل مفتوحاً للـ Worker لإطلاق المصنع سحابياً عند طلب العميل
+    types: [build_app] 
 
 jobs:
   build:
@@ -21,19 +21,11 @@ jobs:
 
       - name: Prepare Keystore 👑
         run: |
-          # 1. محاولة فك التشفير
           echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > release-key.jks || true
-          
-          # 2. التحقق من الملف: إذا كان حجمه صغيراً جداً أو تالفاً، نولد مفتاحاً جديداً فورياً (Automatic Fallback)
           if [ ! -f "release-key.jks" ] || [ $(stat -c%s "release-key.jks") -lt 100 ]; then
             echo "⚠️ Keystone file corrupted or missing! Generating auto-key for build..."
-            
-            # 🔥 الحل هنا: نحذف الملف الفارغ أو المعطوب قبل توليد الجديد حتى لا تعترض أداة الجافا
             rm -f release-key.jks 
-            
             keytool -genkeypair -v -keystore release-key.jks -storepass android -alias key0 -keypass android -keyalg RSA -keysize 2048 -validity 1000 -dname "CN=Royal, OU=Engine, O=Factory, L=City, S=State, C=US"
-            
-            # تحديث المتغيرات لاستخدام مفتاحنا الجديد المولّد تلقائياً
             echo "KEYSTORE_PASSWORD=android" >> $GITHUB_ENV
             echo "KEY_ALIAS=key0" >> $GITHUB_ENV
             echo "KEY_PASSWORD=android" >> $GITHUB_ENV
@@ -43,17 +35,6 @@ jobs:
             echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
             echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
           fi
-
-      # 👑 تعطيل مؤقت لأننا نختبر يدويًا بدون سيرفر/وركر
-      # - name: Generate Client Config 👑
-      #   run: |
-      #     cat > client-config.properties <<EOF
-      #     PACKAGE_NAME=${{ github.event.client_payload.package }}
-      #     CLIENT_URL=${{ github.event.client_payload.url }}
-      #     APP_NAME=${{ github.event.client_payload.name }}
-      #     THEME_COLOR=#ffffff
-      #     IS_LIGHT_BG=true
-      #     EOF
 
       - name: Nexus Root Diagnostic 🔍
         run: |
@@ -67,20 +48,42 @@ jobs:
           ./gradlew app:dependencies --configuration releaseRuntimeClasspath > dependencies_report.txt
           cat dependencies_report.txt
 
+      # 🔍 نظام الفحص الدقيق وحقن الحل السريع للكلاس المفقود
+      - name: 🔍 High-Precision Lifecycle & Startup Diagnostic
+        run: |
+          echo "========================================================"
+          echo "🔎 الفحص الدقيق: البحث عن كلاسات Lifecycle و Startup في المشروع..."
+          echo "========================================================"
+          
+          # 1. البحث في تقرير الاعتماديات لمعرفة هل هناك تضارب في الإصدارات
+          if grep -q "androidx.lifecycle:lifecycle-process" dependencies_report.txt; then
+            echo "✅ مكتبة lifecycle-process متواجدة في شجرة الاعتماديات."
+          else
+            echo "❌ تحذير: مكتبة lifecycle-process مفقودة من شجرة الاعتماديات!"
+          fi
+
+          # 2. الحل السريع والمضمون: إنشاء ملف proguard يدوياً وحقنه في نظام البناء فوراً 
+          # لإجبار Gradle على تثبيت الكلاس ومنع كراش الـ NoClassDefFoundError
+          echo "⚙️ توليد وحقن ملف حماية الكلاسات يدوياً..."
+          cat <<EOF > app/proguard-rules.pro
+          -keep class androidx.lifecycle.ReportFragment { *; }
+          -keep class androidx.lifecycle.ReportFragment\$* { *; }
+          -keep class androidx.startup.** { *; }
+          -keep public class * extends androidx.startup.Initializer
+          EOF
+          
+          echo "✅ تم إنشاء وحقن ملف proguard-rules.pro بنجاح في مسار التطبيق."
+
       - name: Build Debug APK 👑
         run: |
-          ./gradlew assembleDebug
+          # إضافة clean لإجبار gradle على مسح أي كاش قديم وإعادة فحص الكلاسات من الصفر
+          ./gradlew clean assembleDebug
 
       - name: Extract Real SHA256 Fingerprint 🔐
         id: cert_info
         run: |
-          # استخراج البصمة الحقيقية بالملي من ملف الشهادة المستخدم في التوقيع
           SHA256_HEX=$(keytool -list -v -keystore release-key.jks -storepass "${{ env.KEYSTORE_PASSWORD }}" -alias "${{ env.KEY_ALIAS }}" | grep "SHA256:" | awk '{print $2}')
           echo "PROP_SHA256=$SHA256_HEX" >> $GITHUB_ENV
-          
-          # ========================================================
-          # 👑 أمر الطباعة في السجل لرؤية البصمة بعينك ونسخها 👑
-          # ========================================================
           echo "========================================================"
           echo "🔥 الف مبروك! البصمة الحقيقية للتطبيق هي: $SHA256_HEX"
           echo "========================================================"
@@ -102,7 +105,6 @@ jobs:
       - name: Notify Nexus Worker with Real Data 🔔
         if: success()
         run: |
-          # إرسال البيانات الحقيقية المستخرجة (الحالة، البصمة، وروابط الـ Artifacts التخيلية) إلى الوركر
           curl -X POST "https://nexus-auth-manager.smart346965.workers.dev/build-webhook" \
           -H "Content-Type: application/json" \
           -d '{
