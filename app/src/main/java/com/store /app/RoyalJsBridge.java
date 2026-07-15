@@ -5,6 +5,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
+import org.mozilla.geckoview.GeckoSession.PromptDelegate.PromptRequest;
+import org.mozilla.geckoview.GeckoSession.PromptDelegate.PromptResponse;
 
 /**
 =========================================================
