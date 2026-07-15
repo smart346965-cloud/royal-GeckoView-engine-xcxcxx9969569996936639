@@ -66,11 +66,13 @@ android {
     }
 }
 
-// 🛡️ درع حماية التوافقية لضمان عمل كافة العناصر بانسجام تام على الـ SDK 34
+// 🛡️ درع التوافقية المطور لحل تعارض أندرويد 14 وتأمين ملفات الـ Lifecycle من الـ TOML مباشرة
 configurations.all {
     resolutionStrategy {
-        force 'androidx.core:core:1.13.0'
-        force 'androidx.core:core-ktx:1.13.0'
+        force libs.androidx.core
+        force libs.androidx.core.ktx
+        force libs.androidx.lifecycle.runtime
+        force libs.androidx.lifecycle.process
     }
 }
 
@@ -86,6 +88,9 @@ dependencies {
     
     // 🎨 شاشة البدء السلسة والحديثة (Splash Screen) لمنع الوميض ومزامنة شاشتك
     implementation libs.androidx.core.splashscreen
+    
+    // 🧬 تأمين دورة حياة التطبيق لمنع كراش الـ InitializationProvider (مستدعى من الـ TOML)
+    implementation libs.androidx.lifecycle.process
     
     // 🔔 الإشعارات والاتصالات الخارجية (جاهزة ومنتظمة)
     implementation libs.onesignal
