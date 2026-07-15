@@ -11,14 +11,26 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
+    // نحدد نظام المستودعات ليكون صارماً لضمان استقرار المكتبات
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    
     repositories {
+        // 1. المستودع الأساسي لمكتبات جوجل وأندرويد
         google()
+        
+        // 2. مستودع MavenCentral العام
         mavenCentral()
+        
+        // 3. 🚀 إضافة مخزن مكتبات موزيلا (GeckoView) - ضروري جداً
+        maven { 
+            url uri("https://maven.mozilla.org/maven2") 
+        }
     }
 }
 
 rootProject.name = "TWA-mra"
-// 👑 الإصلاح هنا: تم إضافة app ليتعرف على المجلد
+
+// 👑 هيكلة المشروع: تعريف المجلد الرئيسي للتطبيق
 include ':app'
