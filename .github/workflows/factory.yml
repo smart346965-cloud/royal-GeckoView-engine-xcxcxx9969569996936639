@@ -10,12 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
+          
       - name: Grant execute permission
         run: chmod +x gradlew
 
@@ -43,42 +45,46 @@ jobs:
           echo "========== GRADLE VERSION =========="
           ./gradlew --version
 
-      - name: Run Dependency Report for Expert
+      # 📊 التقرير الأول: شجرة الاعتماديات الكاملة بدون قص
+      - name: Run Full Dependency Report for Expert
         run: |
           ./gradlew app:dependencies --configuration releaseRuntimeClasspath > dependencies_report.txt
           cat dependencies_report.txt
 
-      # 🔍 نظام الفحص الدقيق وحقن الحل السريع للكلاس المفقود
-      - name: 🔍 High-Precision Lifecycle & Startup Diagnostic
+      # 🔍 التقرير الثاني: التشخيص العميق والتحقيق في المكاتب (Dependency Insight)
+      - name: 📊 Deep Dependency Insight Investigation
         run: |
           echo "========================================================"
-          echo "🔎 الفحص الدقيق: البحث عن كلاسات Lifecycle و Startup في المشروع..."
+          echo "🔎 1) INVESTIGATING LIFECYCLE DEPENDENCY INSIGHT..."
           echo "========================================================"
+          ./gradlew app:dependencyInsight --dependency androidx.lifecycle --configuration releaseRuntimeClasspath || true
           
-          # 1. البحث في تقرير الاعتماديات لمعرفة هل هناك تضارب في الإصدارات
-          if grep -q "androidx.lifecycle:lifecycle-process" dependencies_report.txt; then
-            echo "✅ مكتبة lifecycle-process متواجدة في شجرة الاعتماديات."
-          else
-            echo "❌ تحذير: مكتبة lifecycle-process مفقودة من شجرة الاعتماديات!"
-          fi
+          echo "========================================================"
+          echo "🔎 2) INVESTIGATING STARTUP DEPENDENCY INSIGHT..."
+          echo "========================================================"
+          ./gradlew app:dependencyInsight --dependency androidx.startup --configuration releaseRuntimeClasspath || true
+          
+          echo "========================================================"
+          echo "🔎 3) INVESTIGATING FRAGMENT & GECKOVIEW SOURCE..."
+          echo "========================================================"
+          ./gradlew app:dependencyInsight --dependency androidx.fragment --configuration releaseRuntimeClasspath || true
+          ./gradlew app:dependencyInsight --dependency org.mozilla.geckoview --configuration releaseRuntimeClasspath || true
 
-          # 2. الحل السريع والمضمون: إنشاء ملف proguard يدوياً وحقنه في نظام البناء فوراً 
-          # لإجبار Gradle على تثبيت الكلاس ومنع كراش الـ NoClassDefFoundError
-          echo "⚙️ توليد وحقن ملف حماية الكلاسات يدوياً..."
+      # ⚙️ خطوة حقن وقائية لملف proguard لضمان عدم التدخل الخارجي أثناء التجميع
+      - name: ⚙️ Inject Strict ProGuard Rules
+        run: |
           cat <<EOF > app/proguard-rules.pro
           -keep class androidx.lifecycle.ReportFragment { *; }
           -keep class androidx.lifecycle.ReportFragment\$* { *; }
           -keep class androidx.startup.** { *; }
           -keep public class * extends androidx.startup.Initializer
           EOF
-          
-          echo "✅ تم إنشاء وحقن ملف proguard-rules.pro بنجاح في مسار التطبيق."
 
       - name: Build Debug APK 👑
         run: |
-          # إضافة clean لإجبار gradle على مسح أي كاش قديم وإعادة فحص الكلاسات من الصفر
           ./gradlew clean assembleDebug
 
+      # 🔐 استخراج بصمة الشهادة
       - name: Extract Real SHA256 Fingerprint 🔐
         id: cert_info
         run: |
@@ -86,6 +92,51 @@ jobs:
           echo "PROP_SHA256=$SHA256_HEX" >> $GITHUB_ENV
           echo "========================================================"
           echo "🔥 الف مبروك! البصمة الحقيقية للتطبيق هي: $SHA256_HEX"
+          echo "========================================================"
+
+      # 🛑 التقرير الثالث والأهم: تشريح الـ APK وفحص أحشاء كود الـ DEX (Ultimate Dex Investigation)
+      - name: 🔬 Ultimate APK Dex & Class Investigation (The Truth Report)
+        run: |
+          echo "========================================================"
+          echo "🔬 التحقيق الإمبراطوري: تشريح الـ APK للبحث عن الكلاس المفقود..."
+          echo "========================================================"
+          
+          # تحديد مسار الـ APK الناتج بدقة
+          APK_PATH=$(find app/build/outputs/apk/debug/ -name "*.apk" | head -n 1)
+          
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ خطأ فادح: لم يتم العثور على ملف APK للتشريح!"
+            exit 1
+          fi
+          
+          echo "🎯 تم العثور على الـ APK في المسار: $APK_PATH"
+          
+          # تثبيت أدوات أندرويد للتشريح (توفير بيئة dexdump)
+          sudo apt-get update && sudo apt-get install -y dalvik-exchange || true
+          
+          # استخراج كود الـ DEX والبحث الجنائي عن الكلاس الداخلي المطلوب بالملي
+          echo "🔎 فحص محتويات الـ APK عبر unzip للتحقق الأولي..."
+          unzip -l "$APK_PATH" | grep "classes" || true
+          
+          echo "--------------------------------------------------------"
+          echo "🔍 الفحص الجنائي لـ ReportFragment داخل الـ DEX:"
+          echo "--------------------------------------------------------"
+          
+          # دمج فحص الكلاس عبر البحث النصي الموسع في ملفات الـ DEX
+          mkdir -p dex_extracted
+          unzip -p "$APK_PATH" "classes*.dex" > dex_extracted/all_dex.dex || true
+          
+          if strings dex_extracted/all_dex.dex | grep -q "ReportFragment"; then
+            echo "✅ كلاس ReportFragment متواجد ومسجل في ملفات الـ DEX!"
+            
+            echo "🔹 الكلاسات والروابط الداخلية المكتشفة لـ ReportFragment:"
+            strings dex_extracted/all_dex.dex | grep "ReportFragment" || true
+          else
+            echo "❌ كارثة: كلاس ReportFragment غائب تماماً وغير موجود بالـ APK النهائي!"
+          fi
+          
+          echo "========================================================"
+          echo "🏁 انتهى تقرير التشريح الشامل. انسخ السجلات البرمجية للخبير الآن."
           echo "========================================================"
 
       - name: Upload Finished APK
