@@ -53,11 +53,12 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "Failed to initialize RoyalPanopticon: " + e.getMessage());  
         }  
 
-        // 1️⃣ استدعاء وتهيئة خادم Gecko الخالد مباشرة  
+        // 1️⃣ تهيئة المحرك كـ Core (سيتحقق تلقائياً ولن يكرر التهيئة)
         if (!RoyalWebViewHost.isReady()) {  
             RoyalWebViewHost.create(getApplicationContext());  
         }  
 
+        // 2️⃣ ربط الـ GeckoView بالجلسة (إنشاء برمجي)
         activeWebView = RoyalWebViewHost.attach(this);  
         activeSession = RoyalWebViewHost.getSession();  
 
@@ -79,16 +80,18 @@ public class MainActivity extends AppCompatActivity {
             });  
         }  
 
-        // 2️⃣ تعيين المحرك الخالد كواجهة أساسية مباشرة (استجابة 0ms)  
+        // 3️⃣ تعيين المحرك الخالد كواجهة أساسية مباشرة (استجابة 0ms)  
         setContentView(activeWebView);  
 
-        // 3️⃣ توجيه المحرك للهدف  
-        String targetUrl = "https://au.koala.com/";   
-        if (activeSession != null && (currentUrl == null || !currentUrl.startsWith("http"))) {  
-            activeSession.loadUri(targetUrl);  
+        // 4️⃣ تحميل الرابط لأول مرة إذا لم يكن محمل سابقاً
+        if (savedInstanceState == null && activeSession != null) {
+            String targetUrl = "https://au.koala.com/";  
+            if (currentUrl == null || !currentUrl.startsWith("http")) {  
+                activeSession.loadUri(targetUrl);  
+            }  
         }  
 
-        // 4️⃣ نظام التحكم بالرجوع المستقل نيتف (Native Back Press Handling)  
+        // 5️⃣ نظام التحكم بالرجوع المستقل نيتف (Native Back Press Handling)  
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {  
             @Override  
             public void handleOnBackPressed() {  
@@ -101,12 +104,12 @@ public class MainActivity extends AppCompatActivity {
             }  
         });  
 
-        // 5️⃣ الحصانة البصرية وتخصيص شريط النظام بالكامل  
+        // 6️⃣ الحصانة البصرية وتخصيص شريط النظام بالكامل  
         // نمرر WebView مؤقت لإرضاء ميثود الـ SystemUI المتوقع لـ WebView وتجنب خطأ التعارض البرمجي
         SystemUI.applyKingMode(this, new android.webkit.WebView(this));  
         SystemUI.setDynamicIcons(this.getWindow(), true);  
 
-        // 6️⃣ بناء وتجهيز طبقة شاشة التحميل  
+        // 7️⃣ بناء وتجهيز طبقة شاشة التحميل  
         setupSplashScreen();
     }
 
@@ -133,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
 
         addContentView(progressBar, progressParams);  
 
-        // 7️⃣ ربط المحرك بمدير المحتوى ومراقبة التحميل  
+        // 8️⃣ ربط المحرك بمدير المحتوى ومراقبة التحميل  
         engineManager = new WebEngineManager(  
                 this,  
                 activeWebView,  
@@ -182,6 +185,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        // 🛡️ تنظيف وفصل الـ View لحماية الرام تماماً
+        if (engineManager != null) {
+            // تنظيف الملفات والموارد المؤقتة
+            RoyalWebViewHost.detach();
+        }
+        
         // 🛡️ فك الارتباط الجراحي لمنع تسريب موارد النظام والبطارية
         if (activeSession != null) {
             activeSession.loadUri("about:blank");
@@ -189,4 +198,4 @@ public class MainActivity extends AppCompatActivity {
         RoyalWebViewHost.destroy();
         super.onDestroy();
     }
-}
+                               }
