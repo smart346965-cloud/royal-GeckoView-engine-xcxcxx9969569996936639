@@ -14,7 +14,7 @@ android {
     defaultConfig {
         applicationId "com.store.app"
         minSdk 26 // متوافق تماماً مع متطلبات محرك GeckoView
-        targetSdk 33 // 🚀 تخفيض الهدف إلى أندرويد 13 لتخطي قيود الـ Hidden API وتفادي كراش GeckoThread
+        targetSdk 34 // 🚀 تمت إعادته إلى 34 بأمان تام بفضل النسخة المستقرة الخالية من تعارضات الحماية
         versionCode 1
         versionName "1.0"
 
