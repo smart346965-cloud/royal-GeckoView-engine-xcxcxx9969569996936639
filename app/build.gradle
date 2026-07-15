@@ -81,6 +81,9 @@ dependencies {
     
     // 🧬 تأمين دورة حياة التطبيق لمنع كراش الـ InitializationProvider (مستدعى من الـ TOML)
     implementation libs.androidx.lifecycle.process
+
+    // 🧩 دعم الـ Fragment المتوافق مع Android 14
+    implementation libs.androidx.fragment
     
     // 🔔 الإشعارات والاتصالات الخارجية (جاهزة ومنتظمة)
     implementation libs.onesignal
