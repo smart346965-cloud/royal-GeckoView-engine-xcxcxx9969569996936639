@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId "com.store.app"
-        minSdk 24 // متوافق تماماً مع محرك Royal Engine
+        minSdk 26 // متوافق تماماً مع محرك Royal Engine
         targetSdk 34
         versionCode 1
         versionName "1.0"
