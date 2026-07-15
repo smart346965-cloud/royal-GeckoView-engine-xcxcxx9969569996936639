@@ -17,7 +17,7 @@ webkit = "1.11.0"
 geckoview = "130.0.20240829075237"
 
 # 🧬 النسخة الذهبية المستقرة والآمنة لحل مشكلة كراش الـ Lifecycle
-lifecycle = "2.7.0"
+lifecycle = "2.8.4"
 androidxCore = "1.13.1"
 
 [libraries]
