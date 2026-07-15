@@ -29,7 +29,7 @@ public final class RoyalWebViewHost {
     private RoyalWebViewHost() {}
 
     /**
-     * 🚀 تهيئة المكونات الخالدة للمحرك (تُستدعى مرة واحدة في الـ Application أو أول Activity)
+     * 🚀 تهيئة المكونات الخالدة للمحرك (تُستدعى مرة واحدة عند إقلاع التطبيق)
      */
     public static synchronized void init(@NonNull Context context) {
         if (isInitialized) return;
@@ -43,10 +43,9 @@ public final class RoyalWebViewHost {
         Context appContext = context.getApplicationContext();
 
         try {
-            // 1️⃣ بناء إعدادات المحرك القياسية كما توصي Mozilla
+            // 1️⃣ بناء إعدادات المحرك القياسية
             if (geckoRuntimeInstance == null) {
                 GeckoRuntimeSettings settings = new GeckoRuntimeSettings.Builder()
-                        .automaticCrashReporting(true)
                         .javaScriptEnabled(true)
                         .build();
                 geckoRuntimeInstance = GeckoRuntime.create(appContext, settings);
@@ -58,7 +57,6 @@ public final class RoyalWebViewHost {
                 GeckoSessionSettings sessionSettings = geckoSessionInstance.getSettings();
                 sessionSettings.setUseTrackingProtection(true); // حماية التتبع لتسريع التصفح
                 sessionSettings.setAllowJavascript(true);       // تفعيل الجافا سكريبت
-                sessionSettings.setDomStorageEnabled(true);     // تفعيل التخزين المحلي للموقع
             }
 
             // 3️⃣ ربط الجلسة بالمحرك الأساسي (تفتح مرة واحدة فقط)
