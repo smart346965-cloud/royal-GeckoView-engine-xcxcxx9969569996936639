@@ -10,8 +10,8 @@ constraintlayout = "2.1.4"
 onesignal = "5.1.13"
 coreSplash = "1.0.1"
 webkit = "1.11.0"
-# 👑 إصدار مستقر ومضمون على خوادم موزيلا (GeckoView Stable ESR)
-geckoview = "115.0.20230710155010"
+# 👑 البصمة الزمنية الدقيقة والنسخة المستقرة المعتمدة من موزيلا
+geckoview = "115.0.20230710135010"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -24,7 +24,6 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 onesignal = { group = "com.onesignal", name = "OneSignal", version.ref = "onesignal" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplash" }
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
-# 👑 ربط سليم وصحيح بالنسخة المستقرة
 geckoview = { group = "org.mozilla.geckoview", name = "geckoview-stable", version.ref = "geckoview" }
 
 [plugins]
