@@ -16,6 +16,10 @@ webkit = "1.11.0"
 
 geckoview = "130.0.20240829075237"
 
+# 🧬 تأمين إصدارات الـ Lifecycle المتوافقة مع أندرويد 14
+lifecycle = "2.8.4"
+androidxCore = "1.13.1"
+
 [libraries]
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -39,6 +43,12 @@ androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscree
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 
 geckoview = { group = "org.mozilla.geckoview", name = "geckoview-omni", version.ref = "geckoview" }
+
+# 🧬 حزم الـ Lifecycle لضمان عدم سقوط أي كلاس أثناء الإقلاع
+androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime", version.ref = "lifecycle" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle" }
+androidx-core = { group = "androidx.core", name = "core", version.ref = "androidxCore" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
