@@ -14,7 +14,7 @@ android {
     defaultConfig {
         applicationId "com.store.app"
         minSdk 26 // متوافق تماماً مع متطلبات محرك GeckoView
-        targetSdk 34
+        targetSdk 33 // 🚀 تخفيض الهدف إلى أندرويد 13 لتخطي قيود الـ Hidden API وتفادي كراش GeckoThread
         versionCode 1
         versionName "1.0"
 
@@ -26,8 +26,9 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true // تفعيل ميزة ضغط الكود واستئصال الكلاسات غير المستخدمة
-            shrinkResources true // إزالة موارد الصور والملفات غير المستعملة تلقائياً
+            minifyEnabled false // اجعلها false مؤقتاً لتتأكد من عمل النسخة الحية
+            shrinkResources false // اجعلها false أيضاً
+            debuggable true // 🔍 تفعيل الفحص البرمجي لتمكين LogFox من اقتناص الأخطاء الحية في نسخة الإنتاج الحالية
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             
             // 🛡️ التخلص النهائي من الـ Debug Symbols الضخمة بداخل مكتبات GeckoView الثنائية
