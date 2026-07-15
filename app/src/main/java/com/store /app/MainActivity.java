@@ -3,7 +3,6 @@ package com.store.app;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
 import android.widget.ProgressBar;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,26 +12,33 @@ import android.util.Log;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 
+import org.mozilla.geckoview.GeckoView;
+import org.mozilla.geckoview.GeckoSession;
+
 /**
- * 👑 MainActivity - النواة الأساسية لإدارة محرك الويب المخصص
- * تم تطهيرها بالكامل من مخلفات الـ TWA لتعمل بأقصى سرعة استجابة (Zero-friction)
+ * 👑 MainActivity - النواة الأساسية لإدارة محرك الويب المخصص (GeckoView Powered)
+ * تم تطهيرها بالكامل لتعمل بأقصى سرعة استجابة (Zero-friction) مع استقرار تام.
  */
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "RoyalMainActivity";
     private boolean splashRemoved = false;
     private WebEngineManager engineManager;
-    private WebView activeWebView;
+    private GeckoView activeWebView; // تم ترقيتها إلى GeckoView
+    private GeckoSession activeSession;
+
+    // لمتابعة حالة الرجوع للخلف بدقة داخل الـ History
+    private boolean canGoBackValue = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // 🛡️ درع الوميض: مطابقة الخلفية مع لون السبلاش لمنع الوميض الأبيض الصارخ
+        // 🛡️ درع الوميض: مطابقة الخلفية لمنع الوميض الأبيض الصارخ
         setTheme(R.style.AppTheme_NoSplash);
         getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#F3F4F6")));
         
         super.onCreate(savedInstanceState);
 
-        // 🔍 تفعيل محرك الفحص والتشخيص الذكي (الآن سيغذي LogFox فوراً!)
+        // 🔍 تفعيل محرك الفحص والتشخيص الذكي
         try {
             RoyalPanopticon.startAwareness();
             Log.i(TAG, "RoyalPanopticon Engine: Active and running in background.");
@@ -40,32 +46,45 @@ public class MainActivity extends AppCompatActivity {
             Log.e(TAG, "Failed to initialize RoyalPanopticon: " + e.getMessage());
         }
 
-        // تفعيل أدوات تصحيح الويب التقنية عبر المتصفح
-        WebView.setWebContentsDebuggingEnabled(true);
-
-        // 1️⃣ استدعاء وتهيئة الويب فيو الخالد مباشرة بدون وسطاء
+        // 1️⃣ استدعاء وتهيئة خادم Gecko الخالد مباشرة
         if (!RoyalWebViewHost.isReady()) {
             RoyalWebViewHost.create(getApplicationContext());
         }
+        
         activeWebView = RoyalWebViewHost.attach(this);
+        activeSession = RoyalWebViewHost.getSession();
+
+        // ربط الجسر والـ PromptDelegate بـ Gecko
+        if (activeSession != null) {
+            activeSession.setPromptDelegate(RoyalWebViewHost.getBridge());
+            
+            // مراقبة التاريخ لتمكين التراجع بدقة نيتف
+            activeSession.setHistoryDelegate(new GeckoSession.HistoryDelegate() {
+                @Override
+                public org.mozilla.geckoview.GeckoResult<Boolean> onHistoryStateChange(@NonNull GeckoSession session, @NonNull HistoryList historyList) {
+                    canGoBackValue = historyList.getCurrentIndex() > 0;
+                    return org.mozilla.geckoview.GeckoResult.fromValue(true);
+                }
+            });
+        }
 
         // 2️⃣ تعيين المحرك الخالد كواجهة أساسية مباشرة (استجابة 0ms)
         setContentView(activeWebView);
 
         // 3️⃣ توجيه المحرك للهدف
         String targetUrl = "https://au.koala.com/"; 
-        if (activeWebView.getUrl() == null || !activeWebView.getUrl().startsWith("http")) {
-            activeWebView.loadUrl(targetUrl);
+        if (activeSession != null && (activeSession.getActiveUri() == null || !activeSession.getActiveUri().startsWith("http"))) {
+            activeSession.loadUri(targetUrl);
         }
 
         // 4️⃣ نظام التحكم بالرجوع المستقل نيتف (Native Back Press Handling)
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (activeWebView != null && activeWebView.canGoBack()) {
-                    activeWebView.post(() -> activeWebView.goBack());
+                if (activeSession != null && canGoBackValue) {
+                    activeSession.goBack();
                 } else {
-                    // إرسال التطبيق للخلفية بدلاً من إغلاقه بالكامل للحفاظ على الويب فيو ساخناً بالذاكرة
+                    // إرسال التطبيق للخلفية للحفاظ على المتصفح ساخناً بالرام
                     moveTaskToBack(true);
                 }
             }
@@ -75,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         SystemUI.applyKingMode(this, activeWebView);
         SystemUI.setDynamicIcons(this.getWindow(), true);
 
-        // 6️⃣ بناء وتجهيز طبقة شاشة التحميل (Splash Screen Overlay)
+        // 6️⃣ بناء وتجهيز طبقة شاشة التحميل
         setupSplashScreen();
     }
 
@@ -113,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
         );
         engineManager.init();
 
-        // 👑 المزامنة المطلقة: ربط السبلاش نيتف بإشارة اكتمال الرندر القادمة من الويب (JS Bridge)
+        // 👑 المزامنة المطلقة: ربط السبلاش بإشارة اكتمال الرندر
         if (RoyalWebViewHost.getBridge() != null) {
             RoyalWebViewHost.getBridge().setOnHideSplashCallback(() -> {
                 if (!splashRemoved) {
@@ -122,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        // Fail-safe: إخفاء الشاشة تلقائياً في حالة حدوث تأخير خارق للعادة لحماية الـ UX
+        // Fail-safe: إخفاء شاشة البدء في حال حدوث تأخير مفاجئ لحماية تجربة العميل
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!splashRemoved && activeWebView != null) {
                 Log.w(TAG, "Fail-safe: Forced reveal after timeout");
@@ -130,35 +149,32 @@ public class MainActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 splashRemoved = true;
             }
-        }, 100); // القيمة 100ms للمزامنة اللحظية الفائقة، ويمكن زيادتها حسب الحاجة
+        }, 100); // بقيمة 100ms للمزامنة اللحظية الساخنة
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        // إيقاف مؤقت للعمليات الرسومية غير النشطة في الخلفية للحفاظ على طاقة الجهاز
-        if (activeWebView != null) {
-            activeWebView.onPause();
-        }
+        // يتم تجميد العمليات غير الضرورية بأمان عبر استدعاء الـ detach التلقائي للويب هوست
+        RoyalWebViewHost.detach();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // استئناف العمليات الرسومية والـ JavaScript فور عودة المستخدم للتطبيق
+        // استئناف الرندرة والـ JavaScript فور عودة العميل للتطبيق
         if (activeWebView != null) {
-            activeWebView.onResume();
+            RoyalWebViewHost.attach(this);
         }
     }
 
     @Override
     protected void onDestroy() {
-        // 🛡️ فك الارتباط الجراحي: فصل الويب فيو بأمان تام لتجنب أخطاء تدمير الـ Buffers الرسومية
-        if (activeWebView != null) {
-            // إيقاف الفيديوهات أو الصوتيات التي قد تعمل في الخلفية لحظة الإغلاق
-            activeWebView.loadUrl("about:blank");
+        // 🛡️ فك الارتباط الجراحي لمنع تسريب موارد النظام والبطارية
+        if (activeSession != null) {
+            activeSession.loadUri("about:blank");
         }
-        RoyalWebViewHost.detach();
+        RoyalWebViewHost.destroy();
         super.onDestroy();
     }
 }
