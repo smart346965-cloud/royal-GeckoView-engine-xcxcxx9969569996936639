@@ -1,14 +1,16 @@
 package com.store.app;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,21 +22,21 @@ import org.mozilla.geckoview.GeckoView;
 import org.mozilla.geckoview.WebRequestError;
 
 /**
- * =========================================================
- * 👑 ROYAL GECKO ENGINE MANAGER (The Core Controller)
- * =========================================================
- * Architecture: GeckoView Native Integration, Splash Synchronization,
- * Scroll Telemetry, Offline Recovery, and Intent Routing.
+ * 👑 ROYAL GECKO ENGINE MANAGER (The Lifecycle Controller)
+ * Handles Activity-scoped GeckoView configuration, bridging to the core Session,
+ * Intent routing, and high-precision splash removal based on First Composite.
  */
 public class WebEngineManager {
 
+    private static final String TAG = "WebEngineManager";
+
     private final Context context;
-    private final android.app.Activity activity;
+    private final Activity activity;
     private final GeckoView geckoView;
     private final GeckoSession geckoSession;
+    
     private final View splashOverlay;
-    private final android.widget.ProgressBar progressBar;
-
+    private final ProgressBar progressBar;
     private final Runnable markSplashRemoved;
     private final SplashStateChecker splashChecker;
 
@@ -43,48 +45,148 @@ public class WebEngineManager {
     private int trustedPort = -1;
 
     private final Handler scrollHandler = new Handler(Looper.getMainLooper());
-    private final Runnable scrollFinishedRunnable =
-            RoyalNetworkEngine::notifyScrollFinished;
+    private final Runnable scrollFinishedRunnable = RoyalNetworkEngine::notifyScrollFinished;
 
     public interface SplashStateChecker {
         boolean isRemoved();
     }
 
-    public WebEngineManager(Context context,
-                            GeckoView geckoView,
-                            View splashOverlay,
-                            android.widget.ProgressBar progressBar,
-                            Runnable markSplashRemoved,
-                            SplashStateChecker splashChecker) {
-
+    public WebEngineManager(@NonNull Context context,
+                            @NonNull GeckoView geckoView,
+                            @Nullable View splashOverlay,
+                            @Nullable ProgressBar progressBar,
+                            @NonNull Runnable markSplashRemoved,
+                            @NonNull SplashStateChecker splashChecker) {
         this.context = context;
         this.geckoView = geckoView;
         this.splashOverlay = splashOverlay;
         this.progressBar = progressBar;
         this.markSplashRemoved = markSplashRemoved;
         this.splashChecker = splashChecker;
-
-        // استدعاء الجلسة من الخادم الخالد الذي صنعناه في الملف الأول
+        
+        this.activity = (context instanceof Activity) ? (Activity) context : null;
+        
+        // جلب الجلسة الخالدة الثابتة من الهوست
         this.geckoSession = RoyalWebViewHost.getSession();
-
-        this.activity = (context instanceof android.app.Activity)
-                ? (android.app.Activity) context
-                : null;
     }
 
+    /**
+     * 🚀 ربط محرك العرض الخاص بالـ Activity الحالية مع الجلسة العامة
+     */
     public void init() {
-        // 👑 1. حارس العودة الساخنة (Warm Resume Guard)
-        // التحقق من أن المحرك جاهز وأنه تم تحميل رابط حقيقي مسبقاً
-        if (RoyalWebViewHost.isReady() && geckoSession.isOpen()) {
-            android.util.Log.i("RoyalEngine", "🔥 Warm Resume Detected! Skipping Splash.");
-            geckoView.setAlpha(1f);
-            removeSplashInstantly();
-            attachDelegates();
+        if (geckoSession == null) {
+            Log.e(TAG, "❌ Cannot initialize WebEngineManager, GeckoSession is null!");
             return;
         }
 
-        configureSettings();
+        configureViewSettings();
         attachDelegates();
+
+        // ربط واجهة العرض الحالية بالجلسة (هنا يحدث السحر البرمجي الصحيح)
+        geckoView.setSession(geckoSession);
+    }
+
+    private void configureViewSettings() {
+        // إعدادات العرض الرسومية للـ View الحالي فقط
+        geckoView.setBackgroundColor(Color.TRANSPARENT);
+        geckoView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        geckoView.setWillNotDraw(false);
+
+        // إعدادات التمرير
+        geckoView.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        geckoView.setHorizontalScrollBarEnabled(false);
+        geckoView.setVerticalScrollBarEnabled(false);
+    }
+
+    private void attachDelegates() {
+        // 🌉 ربط استدعاء إخفاء الـ Splash عبر الجسر
+        if (RoyalWebViewHost.getBridge() != null) {
+            RoyalWebViewHost.getBridge().setOnHideSplashCallback(this::removeSplashSmoothly);
+        }
+
+        // 🚀 PROGRESS DELEGATE
+        geckoSession.setProgressDelegate(new GeckoSession.ProgressDelegate() {
+            @Override
+            public void onPageStart(@NonNull GeckoSession session, @NonNull String url) {
+                RoyalPanopticon.recordRequestSent();
+            }
+
+            @Override
+            public void onPageStop(@NonNull GeckoSession session, boolean success) {
+                RoyalPanopticon.recordNavigationComplete();
+                RoyalNetworkEngine.notifyRenderIdle();
+            }
+
+            @Override
+            public void onProgressChange(@NonNull GeckoSession session, int progress) {
+                if (progressBar != null) {
+                    progressBar.setProgress(progress);
+                    if (progress == 100) {
+                        progressBar.animate()
+                                .alpha(0f)
+                                .setDuration(150)
+                                .withEndAction(() -> progressBar.setVisibility(View.GONE))
+                                .start();
+                    } else {
+                        progressBar.setVisibility(View.VISIBLE);
+                        progressBar.setAlpha(1f);
+                    }
+                }
+            }
+        });
+
+        // 🎨 CONTENT DELEGATE (إزالة الـ Splash هنا فقط تضمن عدم وجود شاشة بيضاء)
+        geckoSession.setContentDelegate(new GeckoSession.ContentDelegate() {
+            @Override
+            public void onFirstComposite(@NonNull GeckoSession session) {
+                RoyalPanopticon.recordFirstByteReceived();
+                RoyalPanopticon.recordDomInteractive();
+                RoyalNetworkEngine.notifyRenderStart();
+
+                // التخلص الآمن والناعم من الشاشة الافتتاحية بعد التأكد من اكتمال رندرة أول بكسل مرئي
+                removeSplashSmoothly();
+            }
+        });
+
+        // 🚦 NAVIGATION DELEGATE (التوجيه الاحترافي وحماية النظام من الروابط الخارجية)
+        geckoSession.setNavigationDelegate(new GeckoSession.NavigationDelegate() {
+            @Nullable
+            @Override
+            public GeckoResult<AllowOrDeny> onLoadRequest(@NonNull GeckoSession session, @NonNull LoadRequest request) {
+                String url = request.uri;
+                Uri uri = Uri.parse(url);
+                boolean isMainFrame = request.isDirectNavigation;
+
+                if (trustedHost == null && isMainFrame && (url.startsWith("http://") || url.startsWith("https://"))) {
+                    setTrustedOrigin(url);
+                }
+
+                if (isMainFrame && handleUriLogic(uri)) {
+                    return GeckoResult.fromValue(AllowOrDeny.DENY); // إيقاف التحميل داخلياً لأنه تم توجيهه خارجياً
+                }
+
+                return GeckoResult.fromValue(AllowOrDeny.ALLOW);
+            }
+
+            @Nullable
+            @Override
+            public GeckoResult<String> onLoadError(@NonNull GeckoSession session, @Nullable String uri, @NonNull WebRequestError error) {
+                Log.e(TAG, "☠️ Load Error: " + error.category);
+                RoyalNetworkEngine.notifyRenderIdle();
+                triggerOfflineProtection(uri);
+                return GeckoResult.fromValue(null);
+            }
+        });
+
+        // 📜 SCROLL DELEGATE
+        geckoSession.setScrollDelegate(new GeckoSession.ScrollDelegate() {
+            @Override
+            public void onScrollChanged(@NonNull GeckoSession session, int scrollX, int scrollY) {
+                RoyalNetworkEngine.notifyScroll(scrollY);
+                scrollHandler.removeCallbacks(scrollFinishedRunnable);
+                scrollHandler.postDelayed(scrollFinishedRunnable, 90);
+            }
+        });
     }
 
     private void removeSplashInstantly() {
@@ -114,164 +216,15 @@ public class WebEngineManager {
         });
     }
 
-    private void configureSettings() {
-        geckoView.setBackgroundColor(Color.TRANSPARENT);
-        geckoView.setAlpha(0f);
-        geckoView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        geckoView.setWillNotDraw(false);
-
-        // إعدادات التمرير لـ GeckoView
-        geckoView.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
-        geckoView.setHorizontalScrollBarEnabled(false);
-        geckoView.setVerticalScrollBarEnabled(false);
-
-        // ملاحظة: إعدادات DOM و JS وقواعد البيانات تم تفعيلها مسبقاً باحترافية
-        // داخل ملف RoyalWebViewHost أثناء إنشاء الـ GeckoSession
-    }
-
-    private void attachDelegates() {
-        
-        // 👑 1. ربط الجسر الملكي لإخفاء السبلاش (استدعاء من الخادم الخالد)
-        if (RoyalWebViewHost.getBridge() != null) {
-            RoyalWebViewHost.getBridge().setOnHideSplashCallback(this::removeSplashSmoothly);
-        }
-
-        // =======================================================
-        // 🚀 PROGRESS DELEGATE (بديل WebChromeClient)
-        // =======================================================
-        geckoSession.setProgressDelegate(new GeckoSession.ProgressDelegate() {
-            @Override
-            public void onPageStart(@NonNull GeckoSession session, @NonNull String url) {
-                // 👁️ [Panopticon Telemetry] تسجيل أول بايت واستقبال الطلب
-                RoyalPanopticon.recordRequestSent();
-            }
-
-            @Override
-            public void onPageStop(@NonNull GeckoSession session, boolean success) {
-                // 👁️ [Panopticon Telemetry] اكتمال عملية التحميل والرندرة
-                RoyalPanopticon.recordNavigationComplete();
-
-                // حقن المحرك الخاص بك
-                // WebEnhancer.apply(geckoView, context); // ⚠️ مُعطل: لأن WebEnhancer مصمم للـ WebView التقليدي وليس GeckoView
-                
-                RoyalNetworkEngine.notifyRenderIdle();
-                syncStatusBarColor(session);
-            }
-
-            @Override
-            public void onProgressChange(@NonNull GeckoSession session, int progress) {
-                if (progressBar != null) {
-                    progressBar.setProgress(progress);
-                    if (progress == 100) {
-                        progressBar.animate()
-                                .alpha(0f)
-                                .setDuration(150)
-                                .withEndAction(() -> progressBar.setVisibility(View.GONE))
-                                .start();
-                    } else {
-                        progressBar.setAlpha(1f);
-                    }
-                }
-            }
-        });
-
-        // =======================================================
-        // 🎨 CONTENT DELEGATE (لرصد اللحظة المرئية بدقة فائقة)
-        // =======================================================
-        geckoSession.setContentDelegate(new GeckoSession.ContentDelegate() {
-            @Override
-            public void onFirstComposite(@NonNull GeckoSession session) {
-                // 👁️ يعادل onPageCommitVisible: المتصفح يعرض أول رسمة
-                RoyalPanopticon.recordFirstByteReceived();
-                RoyalPanopticon.recordDomInteractive();
-
-                RoyalNetworkEngine.notifyRenderStart();
-
-                if (!NetworkMonitor.isInternetAvailable(context)) {
-                    return;
-                }
-
-                // إظهار المحرك بنعومة بعد بدء الرندرة
-                activity.runOnUiThread(() -> {
-                    if (geckoView.getAlpha() == 0f) {
-                        geckoView.animate().alpha(1f).setDuration(180).start();
-                    }
-                });
-
-                // WebEnhancer.apply(geckoView, context); // ⚠️ مُعطل لنفس السبب أعلاه
-            }
-        });
-
-        // =======================================================
-        // 🚦 NAVIGATION DELEGATE (بديل WebViewClient - للتحكم بالروابط)
-        // =======================================================
-        geckoSession.setNavigationDelegate(new GeckoSession.NavigationDelegate() {
-            @Nullable
-            @Override
-            public GeckoResult<AllowOrDeny> onLoadRequest(@NonNull GeckoSession session, @NonNull LoadRequest request) {
-                String url = request.uri;
-                Uri uri = Uri.parse(url);
-                boolean isMainFrame = request.isDirectNavigation;
-
-                // تحديث النطاق الموثوق
-                if (trustedHost == null && isMainFrame && (url.startsWith("http://") || url.startsWith("https://"))) {
-                    setTrustedOrigin(url);
-                }
-
-                if (isMainFrame) {
-                    // اعتراض الطلبات المخصصة (Service Worker) - توجيه الطلب لنواة الشبكة
-                    if (url.endsWith("/nexus-service-worker.js")) {
-                        RoyalNetworkEngine.interceptRequest(null); // تسجيل وهمي لمحركك
-                        // GeckoView يتعامل مع الـ Service Worker داخلياً بشكل أفضل
-                    }
-
-                    if (handleUriLogic(uri, isMainFrame)) {
-                        return GeckoResult.fromValue(AllowOrDeny.DENY); // إلغاء التحميل الداخلي
-                    }
-                }
-
-                return GeckoResult.fromValue(AllowOrDeny.ALLOW); // السماح بالتحميل
-            }
-
-            @Nullable
-            @Override
-            public GeckoResult<String> onLoadError(@NonNull GeckoSession session, @Nullable String uri, @NonNull WebRequestError error) {
-                android.util.Log.e("RoyalEngine", "☠️ Load Error: " + error.category);
-                RoyalNetworkEngine.notifyRenderIdle();
-                triggerOfflineProtection(uri);
-                return GeckoResult.fromValue(null);
-            }
-        });
-
-        // =======================================================
-        // 📜 SCROLL DELEGATE (لإرسال بيانات السكرول للـ NetworkEngine)
-        // =======================================================
-        geckoSession.setScrollDelegate(new GeckoSession.ScrollDelegate() {
-            @Override
-            public void onScrollChanged(@NonNull GeckoSession session, int scrollX, int scrollY) {
-                RoyalNetworkEngine.notifyScroll(scrollY);
-                scrollHandler.removeCallbacks(scrollFinishedRunnable);
-                scrollHandler.postDelayed(scrollFinishedRunnable, 90);
-            }
-        });
-    }
-
     private void triggerOfflineProtection(String failingUrl) {
-        if (failingUrl != null && !failingUrl.startsWith("file:///android_asset/")) {
-            activity.runOnUiThread(() -> {
-                String offline = "resource://android/assets/public/offline.html?origin=" + Uri.encode(failingUrl);
-                geckoSession.loadUri(offline);
-            });
+        if (failingUrl != null && !failingUrl.startsWith("resource://android/assets/")) {
+            if (activity != null) {
+                activity.runOnUiThread(() -> {
+                    String offline = "resource://android/assets/public/offline.html?origin=" + Uri.encode(failingUrl);
+                    geckoSession.loadUri(offline);
+                });
+            }
         }
-    }
-
-    private void syncStatusBarColor(GeckoSession session) {
-        if (activity == null || activity.isFinishing()) return;
-
-        if (!NetworkMonitor.isInternetAvailable(context)) return;
-
-        // ⚠️ GeckoView لا يدعم evaluateScript مباشرة للحصول على قيم راجعة بدون WebExtensions.
-        // الحل الاحترافي المستقبلي هو إرسال اللون من الـ JS مباشرة عبر window.RoyalBridge إلى دالة نيتف مخصصة.
     }
 
     private void setTrustedOrigin(String url) {
@@ -291,14 +244,16 @@ public class WebEngineManager {
         return scheme.equals(trustedScheme) && host.equalsIgnoreCase(trustedHost) && port == trustedPort;
     }
 
-    private boolean handleUriLogic(Uri uri, boolean isMainFrame) {
-        if (!isMainFrame) return false;
+    private boolean handleUriLogic(Uri uri) {
         String scheme = uri.getScheme();
         if (scheme == null) return true;
 
+        // إرسال تطبيقات التواصل الخارجي كـ Intents لنظام أندرويد
         if (scheme.equals("tel") || scheme.equals("mailto") || scheme.equals("whatsapp") || scheme.equals("intent")) {
             try {
-                context.startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
             } catch (Exception ignored) {}
             return true;
         }
@@ -310,15 +265,28 @@ public class WebEngineManager {
             }
 
             if (isSameOrigin(uri)) {
-                return false; // اسمح لـ GeckoView بفتح الرابط داخلياً
+                return false; // الرابط من نفس المتجر الموثوق، افتحه داخلياً في GeckoView
             } else {
                 try {
-                    // الروابط الخارجية تفتح في متصفح النظام
-                    context.startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                    // أي رابط خارجي آخر يتم فتحه في متصفح خارجي آمن
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    context.startActivity(intent);
                 } catch (Exception ignored) {}
                 return true;
             }
         }
         return true;
     }
-                                              }
+
+    /**
+     * ⚠️ تفكيك الارتباط عند تدمير أو إيقاف الـ Activity لمنع تسريب الذاكرة
+     */
+    public void cleanup() {
+        geckoView.setSession(null);
+        geckoSession.setProgressDelegate(null);
+        geckoSession.setContentDelegate(null);
+        geckoSession.setNavigationDelegate(null);
+        geckoSession.setScrollDelegate(null);
+    }
+}
+
