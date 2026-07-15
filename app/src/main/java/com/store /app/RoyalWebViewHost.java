@@ -80,7 +80,6 @@ public final class RoyalWebViewHost {
             GeckoSessionSettings settings = geckoSessionInstance.getSettings();  
             settings.setUseTrackingProtection(true); // حماية مدمجة ضد أدوات التتبع لتسريع التصفح  
             settings.setAllowJavascript(true);       // تفعيل الجافا سكريبت بالكامل  
-            settings.setAutomaticFullscreenMode(true);  
             
             // 3️⃣ ربط الجلسة بالمحرك الأساسي  
             geckoSessionInstance.open(geckoRuntimeInstance);  
