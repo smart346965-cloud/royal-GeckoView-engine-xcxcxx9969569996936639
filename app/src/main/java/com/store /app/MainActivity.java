@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 
 import org.mozilla.geckoview.GeckoView;
 import org.mozilla.geckoview.GeckoSession;
+import org.mozilla.geckoview.GeckoSession.HistoryDelegate.HistoryList;
 
 /**
 👑 MainActivity - النواة الأساسية لإدارة محرك الويب المخصص (GeckoView Powered)
