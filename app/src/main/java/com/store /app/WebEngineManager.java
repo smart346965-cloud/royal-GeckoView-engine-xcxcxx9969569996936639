@@ -152,7 +152,7 @@ public class WebEngineManager {
                 RoyalPanopticon.recordNavigationComplete();
 
                 // حقن المحرك الخاص بك
-                WebEnhancer.apply(geckoView, context);
+                // WebEnhancer.apply(geckoView, context); // ⚠️ مُعطل: لأن WebEnhancer مصمم للـ WebView التقليدي وليس GeckoView
                 
                 RoyalNetworkEngine.notifyRenderIdle();
                 syncStatusBarColor(session);
@@ -198,7 +198,7 @@ public class WebEngineManager {
                     }
                 });
 
-                WebEnhancer.apply(geckoView, context);
+                // WebEnhancer.apply(geckoView, context); // ⚠️ مُعطل لنفس السبب أعلاه
             }
         });
 
@@ -270,30 +270,8 @@ public class WebEngineManager {
 
         if (!NetworkMonitor.isInternetAvailable(context)) return;
 
-        // استخراج لون خلفية الموقع باستخدام GeckoScript
-        session.evaluateScript("(function(){return window.getComputedStyle(document.body).backgroundColor;})();")
-                .then(result -> {
-                    if (result != null) {
-                        String value = result.toString();
-                        if (value.contains("rgb")) {
-                            try {
-                                String clean = value.replaceAll("[^0-9,]", "");
-                                String[] parts = clean.split(",");
-                                int r = Integer.parseInt(parts[0].trim());
-                                int g = Integer.parseInt(parts[1].trim());
-                                int b = Integer.parseInt(parts[2].trim());
-                                int color = Color.rgb(r, g, b);
-
-                                activity.runOnUiThread(() -> {
-                                    activity.getWindow().setStatusBarColor(color);
-                                    boolean isLight = SystemUI.isColorLight(color);
-                                    SystemUI.setDynamicIcons(activity.getWindow(), isLight);
-                                });
-                            } catch (Exception ignored) {}
-                        }
-                    }
-                    return null;
-                });
+        // ⚠️ GeckoView لا يدعم evaluateScript مباشرة للحصول على قيم راجعة بدون WebExtensions.
+        // الحل الاحترافي المستقبلي هو إرسال اللون من الـ JS مباشرة عبر window.RoyalBridge إلى دالة نيتف مخصصة.
     }
 
     private void setTrustedOrigin(String url) {
@@ -343,5 +321,4 @@ public class WebEngineManager {
         }
         return true;
     }
-}
-
+                                              }
