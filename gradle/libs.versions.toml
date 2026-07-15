@@ -16,8 +16,8 @@ webkit = "1.11.0"
 
 geckoview = "130.0.20240829075237"
 
-# 🧬 تأمين إصدارات الـ Lifecycle المتوافقة مع أندرويد 14
-lifecycle = "2.8.4"
+# 🧬 النسخة الذهبية المستقرة والآمنة لحل مشكلة كراش الـ Lifecycle
+lifecycle = "2.7.0"
 androidxCore = "1.13.1"
 
 [libraries]
