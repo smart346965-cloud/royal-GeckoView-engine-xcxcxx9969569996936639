@@ -31,6 +31,16 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    // 👇 استراتيجية تقليص الحجم الاحترافية
+    splits {
+        abi {
+            enable true
+            reset()
+            include "arm64-v8a", "armeabi-v7a" // ندعم أهم المعماريات للمتجر
+            universalApk false
+        }
+    }
 }
 
 dependencies {
@@ -40,8 +50,8 @@ dependencies {
     implementation libs.activity
     implementation libs.constraintlayout
     
-    // 👇 أضف هذا السطر لمكتبة WebKit المتقدمة الخاصة بمحركك
-    implementation libs.androidx.webkit
+    // 👇 إضافة الوحش الجديد
+    implementation libs.geckoview
     
     // 🎨 مكتبة الـ Splash Screen الرسمية (لتنعيم الدخول في أندرويد 12+)
     implementation libs.androidx.core.splashscreen
