@@ -10,7 +10,7 @@ constraintlayout = "2.1.4"
 onesignal = "5.1.13"
 coreSplash = "1.0.1"
 webkit = "1.11.0"
-geckoview = "131.0.20240923213423"
+geckoview = "123.0.20240212151624"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -23,7 +23,7 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 onesignal = { group = "com.onesignal", name = "OneSignal", version.ref = "onesignal" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplash" }
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
-geckoview = { group = "org.mozilla.geckoview", name = "geckoview-beta", version.ref = "geckoview" }
+geckoview = { group = "org.mozilla.geckoview", name = "geckoview-stable", version.ref = "geckoview" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
