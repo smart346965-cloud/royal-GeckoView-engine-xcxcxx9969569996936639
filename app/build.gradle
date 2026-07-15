@@ -4,26 +4,36 @@ plugins {
 
 android {
     namespace 'com.store.app'
-    compileSdk 34 // المعيار الحديث للأداء
+    compileSdk 34 // المعيار الحديث للأداء بأعلى استقرار
 
-    // 👇 أضف هذا البلوك هنا لتفعيل BuildConfig
+    // ⚡ تفعيل الـ BuildConfig لتسهيل عمليات الفحص والتشغيل الذكي
     buildFeatures {
         buildConfig true
     }
 
     defaultConfig {
         applicationId "com.store.app"
-        minSdk 26 // متوافق تماماً مع محرك Royal Engine
+        minSdk 26 // متوافق تماماً مع متطلبات محرك GeckoView
         targetSdk 34
         versionCode 1
         versionName "1.0"
+
+        // 🚀 حصر البناء ليركز فقط على معمارية المعالجات الحديثة للهواتف (ضمان تقليص الحجم الفوري)
+        ndk {
+            abiFilters "arm64-v8a"
+        }
     }
 
     buildTypes {
         release {
-            minifyEnabled true // تفعيل ضغط الكود للحصول على حجم صاروخي
-            shrinkResources true // إزالة الموارد غير المستخدمة
+            minifyEnabled true // تفعيل ميزة ضغط الكود واستئصال الكلاسات غير المستخدمة
+            shrinkResources true // إزالة موارد الصور والملفات غير المستعملة تلقائياً
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            
+            // 🛡️ التخلص النهائي من الـ Debug Symbols الضخمة بداخل مكتبات GeckoView الثنائية
+            ndk {
+                debugSymbolLevel 'NONE'
+            }
         }
     }
     
@@ -32,18 +42,30 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    // 👇 استراتيجية تقليص الحجم الاحترافية
-    splits {
-        abi {
-            enable true
-            reset()
-            include "arm64-v8a", "armeabi-v7a" // ندعم أهم المعماريات للمتجر
-            universalApk false
+    // 📦 الإستراتيجية المطلقة لضغط وحزم المكونات الداخلية
+    packaging {
+        jniLibs {
+            // إجبار محرك البناء على ضغط ملفات الـ .so الخاصة بـ Gecko لضغط المساحة لأصغر حجم ممكن
+            useLegacyPackaging = false
+        }
+        resources {
+            // حذف الملفات التراخيصية والمكررة لتفادي أي امتلاء وهمي في الحزمة النهائية
+            excludes += [
+                'META-INF/DEPENDENCIES',
+                'META-INF/LICENSE',
+                'META-INF/LICENSE.txt',
+                'META-INF/license.txt',
+                'META-INF/NOTICE',
+                'META-INF/NOTICE.txt',
+                'META-INF/notice.txt',
+                'META-INF/ASL2.0',
+                'META-INF/*.kotlin_module'
+            ]
         }
     }
 }
 
-// 👑 درع التوافقية: إجبار جاردل على استخدام نسخ مستقرة متوافقة مع SDK 34
+// 🛡️ درع حماية التوافقية لضمان عمل كافة العناصر بانسجام تام على الـ SDK 34
 configurations.all {
     resolutionStrategy {
         force 'androidx.core:core:1.13.0'
@@ -52,22 +74,22 @@ configurations.all {
 }
 
 dependencies {
-    // 🛡️ مكتبات أندرويد الصافية والأساسية (مسحوبة بتناغم تام من TOML)
+    // ⚔️ أساسيات نظام أندرويد الصافية والمستقرة
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
     implementation libs.constraintlayout
     
-    // 👇 إضافة الوحش الجديد
+    // 🦖 محرك الويب GeckoView (النسخة المختارة بكامل قدراتها البرمجية)
     implementation libs.geckoview
     
-    // 🎨 مكتبة الـ Splash Screen الرسمية (لتنعيم الدخول في أندرويد 12+)
+    // 🎨 شاشة البدء السلسة والحديثة (Splash Screen) لمنع الوميض ومزامنة شاشتك
     implementation libs.androidx.core.splashscreen
     
-    // 🔔 الإشعارات (جاهزة ومربوطة متى ما أردت تفعيلها)
+    // 🔔 الإشعارات والاتصالات الخارجية (جاهزة ومنتظمة)
     implementation libs.onesignal
 
-    // 🧪 مكتبات الاختبار والتأكد من الجودة
+    // 🧪 حزم فحص واختبار جودة الأداء
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
