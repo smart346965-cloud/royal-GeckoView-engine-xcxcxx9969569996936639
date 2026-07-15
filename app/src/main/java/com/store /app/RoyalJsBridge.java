@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
-import org.mozilla.geckoview.GeckoSession.PromptDelegate.PromptRequest;
+import org.mozilla.geckoview.GeckoSession.PromptDelegate.TextPrompt;
 import org.mozilla.geckoview.GeckoSession.PromptDelegate.PromptResponse;
 
 /**
@@ -59,17 +59,17 @@ public class RoyalJsBridge implements GeckoSession.PromptDelegate {
     */
     @Nullable
     @Override
-    public GeckoResult<PromptResponse> onPromptRequest(@NonNull GeckoSession session, @NonNull PromptRequest request) {
-        String message = request.message;
+    public GeckoResult<PromptResponse> onTextPrompt(@NonNull GeckoSession session, @NonNull TextPrompt prompt) {
+        String message = prompt.message;
 
         if (message != null && message.startsWith("RoyalBridge:")) {
             String action = message.substring("RoyalBridge:".length());
-            String payload = request.defaultValue;
+            String payload = prompt.defaultValue;
 
             handleBridgeAction(action, payload);  
             
             // تأكيد إلغاء النافذة الصامت لكي لا تظهر للمستخدم نهائياً  
-            return GeckoResult.fromValue(request.confirm(""));
+            return GeckoResult.fromValue(prompt.confirm(""));
         }
 
         return null; // اترك النوافذ العادية ليتعامل معها النظام تلقائياً
@@ -203,4 +203,4 @@ public class RoyalJsBridge implements GeckoSession.PromptDelegate {
             geckoSession.setPromptDelegate(this);
         }
     }
-}
+    }
