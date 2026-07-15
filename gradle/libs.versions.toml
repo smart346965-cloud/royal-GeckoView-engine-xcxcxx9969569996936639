@@ -14,7 +14,7 @@ onesignal = "5.1.13"
 coreSplash = "1.0.1"
 webkit = "1.11.0"
 
-geckoview = "146.0.20251217121356"
+geckoview = "130.0.20240829075237"
 
 [libraries]
 
@@ -38,7 +38,7 @@ androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscree
 
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 
-geckoview = { group = "org.mozilla.geckoview", name = "geckoview", version.ref = "geckoview" }
+geckoview = { group = "org.mozilla.geckoview", name = "geckoview-omni", version.ref = "geckoview" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
