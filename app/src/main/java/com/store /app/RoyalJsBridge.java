@@ -7,12 +7,12 @@ import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoSession;
 
 /**
- * =========================================================
- * 👑 ROYAL JS BRIDGE (GeckoView Native Interface Channel)
- * =========================================================
- * Channeling high-performance telemetry, page warmups, and splash
- * control from Gecko runtime to Android native runtime.
- */
+=========================================================
+👑 ROYAL JS BRIDGE (GeckoView Native Interface Channel)
+=========================================================
+Channeling high-performance telemetry, page warmups, and splash
+control from Gecko runtime to Android native runtime.
+*/
 public class RoyalJsBridge implements GeckoSession.PromptDelegate {
 
     private static final String TAG = "RoyalJsBridge";
@@ -22,8 +22,8 @@ public class RoyalJsBridge implements GeckoSession.PromptDelegate {
     public RoyalJsBridge(GeckoSession geckoSession) {
         this.geckoSession = geckoSession;
         
-        // 👁️ تسجيل الهيكل الشجري للمحركات داخل نظام التشخيص الملكي عند بناء الجسر
-        RoyalPanopticon.registerDependency("WebChromeEngine", "JS-BridgeChannel");
+        // 👁️ تسجيل الهيكل الشجري للمحركات داخل نظام التشخيص الملكي عند بناء الجسر  
+        RoyalPanopticon.registerDependency("WebChromeEngine", "JS-BridgeChannel");  
         RoyalPanopticon.registerDependency("JS-BridgeChannel", "TapWarmupEngine");
     }
 
@@ -32,8 +32,8 @@ public class RoyalJsBridge implements GeckoSession.PromptDelegate {
     }
 
     /**
-     * 🌉 تثبيت الجسر وحقن كائن الاتصال البرمجي (window.RoyalBridge) داخل المتصفح
-     */
+    🌉 تثبيت الجسر وحقن كائن الاتصال البرمجي (window.RoyalBridge) داخل المتصفح
+    */
     public void inject() {
         if (geckoSession == null) return;
 
@@ -49,24 +49,24 @@ public class RoyalJsBridge implements GeckoSession.PromptDelegate {
                 "};" +
                 "})();";
 
-        geckoSession.evaluateScript(jsPayload);
+        geckoSession.loadUri("javascript:void(" + jsPayload + ")");
     }
 
     /**
-     * 📥 اعتراض رسائل الـ prompt وتوجيهها للميثودز النيتف المقابلة
-     */
+    📥 اعتراض رسائل الـ prompt وتوجيهها للميثودز النيتف المقابلة
+    */
     @Nullable
     @Override
     public GeckoResult<PromptResponse> onPromptRequest(@NonNull GeckoSession session, @NonNull PromptRequest request) {
         String message = request.message;
-        
+
         if (message != null && message.startsWith("RoyalBridge:")) {
             String action = message.substring("RoyalBridge:".length());
             String payload = request.defaultValue;
 
-            handleBridgeAction(action, payload);
-
-            // تأكيد إلغاء النافذة الصامت لكي لا تظهر للمستخدم نهائياً
+            handleBridgeAction(action, payload);  
+            
+            // تأكيد إلغاء النافذة الصامت لكي لا تظهر للمستخدم نهائياً  
             return GeckoResult.fromValue(request.confirm(""));
         }
 
@@ -108,15 +108,15 @@ public class RoyalJsBridge implements GeckoSession.PromptDelegate {
     }
 
     /**
-     * 🚀 Network Warmup
-     */
+    🚀 Network Warmup
+    */
     public void warmup(String url) {
         try {
             RoyalPanopticon.pulse("TapWarmupEngine");
             
-            long start = System.currentTimeMillis();
-            RoyalNetworkEngine.warmupLink(url);
-            long duration = System.currentTimeMillis() - start;
+            long start = System.currentTimeMillis();  
+            RoyalNetworkEngine.warmupLink(url);  
+            long duration = System.currentTimeMillis() - start;  
             
             RoyalPanopticon.recordExecution("TapWarmupEngine", duration, true, 0);
         } catch (Exception e) {
@@ -126,8 +126,8 @@ public class RoyalJsBridge implements GeckoSession.PromptDelegate {
     }
 
     /**
-     * 🌊 Scroll velocity hint
-     */
+    🌊 Scroll velocity hint
+    */
     public void scrollHint(int velocity) {
         try {
             RoyalPanopticon.pulse("JS-BridgeChannel");
@@ -138,16 +138,16 @@ public class RoyalJsBridge implements GeckoSession.PromptDelegate {
     }
 
     /**
-     * 🧠 JS diagnostic channel
-     */
+    🧠 JS diagnostic channel
+    */
     public void log(String message) {
         Log.d(TAG, "JS: " + message);
         RoyalPanopticon.pulse("WebChromeEngine");
     }
 
     /**
-     * 🎭 Visual Completeness Signal
-     */
+    🎭 Visual Completeness Signal
+    */
     public void hideSplash() {
         if (onHideSplashCallback != null && geckoSession != null) {
             // تنفيذ كولباك إخفاء شاشة السبلاش بأمان تام على الـ UI Thread
@@ -156,8 +156,8 @@ public class RoyalJsBridge implements GeckoSession.PromptDelegate {
     }
 
     /**
-     * 👁️ Panopticon Telemetry Receiver
-     */
+    👁️ Panopticon Telemetry Receiver
+    */
     public void reportBrowserState(int domNodes, int fps, long jsMemoryMB, int longTasks) {
         try {
             RoyalPanopticon.syncBrowserState(domNodes, fps, jsMemoryMB, longTasks);
@@ -170,26 +170,35 @@ public class RoyalJsBridge implements GeckoSession.PromptDelegate {
     public void inspect() {
         try {
             String report = RoyalPanopticon.buildReport();
-
-            report = report
-                    .replace("\\", "\\\\")
-                    .replace("`", "\\`")
-                    .replace("$", "\\$");
-
-            final String js = "console.log(`" + report + "`);";
-            if (geckoSession != null) {
-                geckoSession.evaluateScript(js);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Inspect failed", e);
+            
+            report = report  
+                    .replace("\\", "\\\\")  
+                    .replace("`", "\\`")  
+                    .replace("$", "\\$");  
+            
+            final String js = "console.log(`" + report + "`);";  
+            if (geckoSession != null) {  
+                geckoSession.loadUri("javascript:void(" + js + ")");  
+            }  
+        } catch (Exception e) {  
+            Log.e(TAG, "Inspect failed", e);  
         }
     }
 
     /**
-     * 🔁 Native → JS callback
-     */
+    🔁 Native → JS callback
+    */
     public void dispatchToJS(String script) {
         if (geckoSession == null) return;
-        geckoSession.evaluateScript(script);
+        geckoSession.loadUri("javascript:void(" + script + ")");
+    }
+
+    /**
+    🔌 تثبيت الجسر البرمجي كـ PromptDelegate للجلسة
+    */
+    public void install() {
+        if (geckoSession != null) {
+            geckoSession.setPromptDelegate(this);
+        }
     }
 }
