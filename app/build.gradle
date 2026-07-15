@@ -43,6 +43,14 @@ android {
     }
 }
 
+// 👑 درع التوافقية: إجبار جاردل على استخدام نسخ مستقرة متوافقة مع SDK 34
+configurations.all {
+    resolutionStrategy {
+        force 'androidx.core:core:1.13.0'
+        force 'androidx.core:core-ktx:1.13.0'
+    }
+}
+
 dependencies {
     // 🛡️ مكتبات أندرويد الصافية والأساسية (مسحوبة بتناغم تام من TOML)
     implementation libs.appcompat
