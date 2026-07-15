@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
             // مراقبة مسار التصفح لتحديث الرابط النشط حالياً تلقائياً
             activeSession.setNavigationDelegate(new GeckoSession.NavigationDelegate() {
                 @Override
-                public void onLocationChange(@NonNull GeckoSession session, @Nullable String url) {
+                public void onLocationChange(@NonNull GeckoSession session, @Nullable String url, @NonNull java.util.List<GeckoSession.Permission> permissions) {
                     currentUrl = url;
                 }
             });
@@ -192,4 +192,4 @@ public class MainActivity extends AppCompatActivity {
         RoyalWebViewHost.destroy();
         super.onDestroy();
     }
-}
+    }
