@@ -65,19 +65,16 @@ public class MainActivity extends AppCompatActivity {
         if (activeSession != null) {  
             activeSession.setPromptDelegate(RoyalWebViewHost.getBridge());  
 
-            // مراقبة مسار التصفح لتحديث الرابط النشط حالياً تلقائياً
-            activeSession.setNavigationDelegate(new GeckoSession.NavigationDelegate() {
-                @Override
-                public void onLocationChange(@NonNull GeckoSession session, @Nullable String url) {
-                    currentUrl = url;
-                }
-            });
-
-            // مراقبة التاريخ لتمكين التراجع بدقة نيتف  
+            // 👑 مراقبة التاريخ لتمكين التراجع وتحديث الرابط النشط باحترافية وبدون تعارض مع مدير المحرك
             activeSession.setHistoryDelegate(new GeckoSession.HistoryDelegate() {  
                 @Override  
                 public void onHistoryStateChange(@NonNull GeckoSession session, @NonNull HistoryList historyList) {  
                     canGoBackValue = historyList.getCurrentIndex() > 0;  
+                    
+                    // استخراج الرابط الحالي بأمان من سجل التاريخ لتجنب مشاكل توافق إصدارات المكتبة المتغيرة
+                    if (historyList.getCurrentIndex() >= 0 && historyList.getCurrentIndex() < historyList.getSize()) {
+                        currentUrl = historyList.get(historyList.getCurrentIndex()).getUri();
+                    }
                 }  
             });  
         }  
