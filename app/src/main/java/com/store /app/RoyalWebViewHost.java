@@ -45,7 +45,7 @@ public final class RoyalWebViewHost {
     private static final long MAX_UPTIME = 3 * 60 * 60 * 1000L; // 3 ساعات
 
     // 🌉 جسر التواصل الملكي المخصص لـ Gecko
-    private static GeckoBridge geckoBridgeInstance;
+    private static RoyalJsBridge geckoBridgeInstance;
 
     private RoyalWebViewHost() {}
 
@@ -92,7 +92,7 @@ public final class RoyalWebViewHost {
             geckoViewInstance.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
             // 🌉 تجهيز وحقن الجسر الملكي المطور لـ GeckoView
-            geckoBridgeInstance = new GeckoBridge(geckoSessionInstance);
+            geckoBridgeInstance = new RoyalJsBridge(geckoSessionInstance);
             geckoBridgeInstance.install(); // تثبيت الجسر لتأمين التواصل الفوري مع الويب
 
             isInitialized = true;
@@ -214,7 +214,7 @@ public final class RoyalWebViewHost {
     }
 
     // 👑 دالة جلب الجسر البرمجي للتحكم بالاتصال الثنائي
-    public static GeckoBridge getBridge() {
+    public static RoyalJsBridge getBridge() {
         return geckoBridgeInstance;
     }
-}
+    }
