@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                     canGoBackValue = historyList.getCurrentIndex() > 0;  
                     
                     // استخراج الرابط الحالي بأمان من سجل التاريخ لتجنب مشاكل توافق إصدارات المكتبة المتغيرة
-                    if (historyList.getCurrentIndex() >= 0 && historyList.getCurrentIndex() < historyList.getSize()) {
+                    if (historyList.getCurrentIndex() >= 0 && historyList.getCurrentIndex() < historyList.size()) {
                         currentUrl = historyList.get(historyList.getCurrentIndex()).getUri();
                     }
                 }  
