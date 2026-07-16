@@ -4,34 +4,35 @@ plugins {
 
 android {
     namespace 'com.store.app'
-    compileSdk 34 // المعيار الحديث للأداء بأعلى استقرار
+    compileSdk 34 
 
-    // ⚡ تفعيل الـ BuildConfig لتسهيل عمليات الفحص والتشغيل الذكي
     buildFeatures {
         buildConfig true
     }
 
     defaultConfig {
         applicationId "com.store.app"
-        minSdk 26 // متوافق تماماً مع متطلبات محرك GeckoView
-        targetSdk 34 // 🚀 تمت إعادته إلى 34 بأمان تام بفضل النسخة المستقرة الخالية من تعارضات الحماية
+        minSdk 26 
+        targetSdk 34 
         versionCode 1
         versionName "1.0"
 
-        // 🚀 حصر البناء ليركز فقط على معمارية المعالجات الحديثة للهواتف (ضمان تقليص الحجم الفوري)
         ndk {
             abiFilters "arm64-v8a"
         }
     }
 
     buildTypes {
+        debug {
+            debuggable true // 🔍 الفحص البرمجي الآمن هنا لتمكين LogFox من اقتناص الأخطاء الحية في بيئة التطوير
+        }
+        
         release {
-            minifyEnabled false // اجعلها false مؤقتاً لتتأكد من عمل النسخة الحية
-            shrinkResources false // اجعلها false أيضاً
-            debuggable true // 🔍 تفعيل الفحص البرمجي لتمكين LogFox من اقتناص الأخطاء الحية في نسخة الإنتاج الحالية
+            minifyEnabled false 
+            shrinkResources false 
+            debuggable false // 🛡️ الوضع الطبيعي والآمن لنسخ الإنتاج النهائية لحمايتها وضمان استقرارها
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             
-            // 🛡️ التخلص النهائي من الـ Debug Symbols الضخمة بداخل مكتبات GeckoView الثنائية
             ndk {
                 debugSymbolLevel 'NONE'
             }
@@ -43,14 +44,11 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    // 📦 الإستراتيجية المطلقة لضغط وحزم المكونات الداخلية
     packaging {
         jniLibs {
-            // إجبار محرك البناء على ضغط ملفات الـ .so الخاصة بـ Gecko لضغط المساحة لأصغر حجم ممكن
             useLegacyPackaging = false
         }
         resources {
-            // حذف الملفات التراخيصية والمكررة لتفادي أي امتلاء وهمي في الحزمة النهائية
             excludes += [
                 'META-INF/DEPENDENCIES',
                 'META-INF/LICENSE',
@@ -67,28 +65,23 @@ android {
 }
 
 dependencies {
-    // ⚔️ أساسيات نظام أندرويد الصافية والمستقرة
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
     implementation libs.constraintlayout
     
-    // 🦖 محرك الويب GeckoView (النسخة المختارة بكامل قدراتها البرمجية)
     implementation libs.geckoview
     
-    // 🎨 شاشة البدء السلسة والحديثة (Splash Screen) لمنع الوميض ومزامنة شاشتك
     implementation libs.androidx.core.splashscreen
     
-    // 🧬 تأمين دورة حياة التطبيق لمنع كراش الـ InitializationProvider (مستدعى من الـ TOML)
-    implementation libs.androidx.lifecycle.process
+    // 🧬 تم تعطيل الاستدعاء اليدوي مؤقتاً بناءً على خطة عزل الخبير
+    // implementation libs.androidx.lifecycle.process
 
-    // 🧩 دعم الـ Fragment المتوافق مع Android 14
-    implementation libs.androidx.fragment
+    // 🧩 تم تعطيل الاستدعاء اليدوي مؤقتاً بناءً على خطة عزل الخبير
+    // implementation libs.androidx.fragment
     
-    // 🔔 الإشعارات والاتصالات الخارجية (جاهزة ومنتظمة)
     implementation libs.onesignal
 
-    // 🧪 حزم فحص واختبار جودة الأداء
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
