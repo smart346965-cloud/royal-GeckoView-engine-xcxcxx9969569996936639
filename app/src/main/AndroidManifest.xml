@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Core Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -33,6 +34,20 @@
             </intent-filter>
 
         </activity>
+
+        <!-- 🛠️ إدارة ومراقبة مزود بدء التشغيل (AndroidX Startup) لعزل الكراش -->
+        <!-- إذا طلب الخبير لاحقاً إيقاف الـ Startup كاملاً، قم بتبديل السطر أدناه بـ tools:node="remove" واحذف محتوياته -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+
+            <!-- تعطيل وإزالة تشغيل الـ Lifecycle التلقائي عند الإقلاع لاختبار الكراش -->
+            <meta-data
+                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+                tools:node="remove" />
+        </provider>
 
         <!-- File Provider -->
         <provider
