@@ -40,128 +40,61 @@ jobs:
 
       - name: Nexus Root Diagnostic 🔍
         run: |
-          echo "========== BUILD.GRADLE CONTENT =========="
-          cat build.gradle
           echo "========== GRADLE VERSION =========="
           ./gradlew --version
 
       # ========================================================
-      # 👑 Royal Crash Investigator
+      # 👑 Royal Crash Investigator (مبسط ومباشر لمعرفة المتسبب)
       # ========================================================
-
       - name: 🔍 Crash Investigation Report
         run: |
-          echo "=============================="
-          echo "1) Lifecycle"
-          echo "=============================="
+          echo "=============================================="
+          echo "🔍 WHO BRINGS STARTUP-RUNTIME? (المتسبب في جلب مكتبة التشغيل)"
+          echo "=============================================="
           ./gradlew app:dependencyInsight \
-            --dependency androidx.lifecycle \
-            --configuration debugRuntimeClasspath
-
-          echo ""
-          echo "=============================="
-          echo "2) Startup"
-          echo "=============================="
-          ./gradlew app:dependencyInsight \
-            --dependency androidx.startup \
-            --configuration debugRuntimeClasspath
-
-          echo ""
-          echo "=============================="
-          echo "3) Fragment"
-          echo "=============================="
-          ./gradlew app:dependencyInsight \
-            --dependency androidx.fragment \
-            --configuration debugRuntimeClasspath
-
-          echo ""
-          echo "=============================="
-          echo "4) GeckoView"
-          echo "=============================="
-          ./gradlew app:dependencyInsight \
-            --dependency org.mozilla.geckoview \
-            --configuration debugRuntimeClasspath
+            --dependency androidx.startup:startup-runtime \
+            --configuration debugRuntimeClasspath | grep -A 10 -B 2 "androidx.startup:startup-runtime" || true
 
       - name: 🔨 Build Debug APK
         run: ./gradlew clean assembleDebug
 
+      # ========================================================
+      # 🔬 APK Forensics + Manifest Dump (تحليل الـ APK النهائي والـ Manifest)
+      # ========================================================
       - name: 🔬 APK Forensics
         run: |
-
           APK=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
-
-          echo ""
-          echo "========================================"
-          echo "APK PATH"
-          echo "========================================"
-          echo "$APK"
-
+          echo "APK PATH: $APK"
           unzip -q "$APK" -d apk
 
           echo ""
           echo "========================================"
-          echo "DEX FILES"
+          echo "🔍 CHECKING CLASSES IN DEX"
           echo "========================================"
-
-          find apk -name "*.dex"
-
-          echo ""
-          echo "========================================"
-          echo "SEARCH ReportFragment"
-          echo "========================================"
-
-          strings apk/*.dex | grep "ReportFragment" || true
-
-          echo ""
-          echo "========================================"
-          echo "SEARCH ActivityInitializationListener"
-          echo "========================================"
-
-          strings apk/*.dex | grep "ActivityInitializationListener" || true
-
-          echo ""
-          echo "========================================"
-          echo "SEARCH ProcessLifecycleInitializer"
-          echo "========================================"
-
-          strings apk/*.dex | grep "ProcessLifecycleInitializer" || true
-
-          echo ""
-          echo "========================================"
-          echo "SEARCH InitializationProvider"
-          echo "========================================"
-
-          strings apk/*.dex | grep "InitializationProvider" || true
-
-          echo ""
-          echo "========================================"
-          echo "AndroidManifest Providers"
-          echo "========================================"
-
-          strings apk/AndroidManifest.xml | grep "androidx.startup" || true
-
-          echo ""
-          echo "========================================"
-          echo "RESULT"
-          echo "========================================"
-
           if strings apk/*.dex | grep -q "ActivityInitializationListener"; then
-            echo "✅ ActivityInitializationListener EXISTS"
+            echo "✅ ActivityInitializationListener: EXISTS"
           else
-            echo "❌ ActivityInitializationListener MISSING"
+            echo "❌ ActivityInitializationListener: MISSING"
           fi
 
           if strings apk/*.dex | grep -q "ReportFragment"; then
-            echo "✅ ReportFragment EXISTS"
+            echo "✅ ReportFragment: EXISTS"
           else
-            echo "❌ ReportFragment MISSING"
+            echo "❌ ReportFragment: MISSING"
           fi
 
           if strings apk/*.dex | grep -q "ProcessLifecycleInitializer"; then
-            echo "✅ ProcessLifecycleInitializer EXISTS"
+            echo "✅ ProcessLifecycleInitializer: EXISTS"
           else
-            echo "❌ ProcessLifecycleInitializer MISSING"
+            echo "❌ ProcessLifecycleInitializer: MISSING"
           fi
+
+          echo ""
+          echo "========================================"
+          echo "📋 FINAL MANIFEST INITIALIZERS (الـ Manifest النهائي للهاتف)"
+          echo "========================================"
+          # استخدام أداة aapt المدمجة في الـ Android SDK لقراءة الـ Manifest الحقيقي ومقدمي الخدمة
+          $ANDROID_HOME/build-tools/34.0.0/aapt dump xmltree "$APK" AndroidManifest.xml | grep -A 15 -B 2 "InitializationProvider" || true
 
       # 🔐 استخراج بصمة الشهادة
       - name: Extract Real SHA256 Fingerprint 🔐
